@@ -73,9 +73,6 @@ st.markdown("<hr style='border:none;border-top:1px solid #e0e8e0;margin:4px 0 28
 page = st.session_state.page
 
 # ── Data ───────────────────────────────────────────────────────────────────
-# NOTE: only loads what's actually used by the four pages below.
-# (The original draft also loaded train_features.csv into a "matches" key
-# that no page ever referenced - dropped here to avoid the unnecessary read.)
 @st.cache_data(ttl=1800)
 def load_all():
     paths = {"preds": PROCESSED/"predictions.csv",
@@ -112,7 +109,6 @@ if page == "🎮  Kick & Predict":
     draw_pct     = 25.0
     aw_pct       = 35.0
     winner       = "TBD"
-    winner_emoji = "⚽"
     commentary   = "Pick a match above to get a prediction."
 
     if not preds.empty:
@@ -131,11 +127,11 @@ if page == "🎮  Kick & Predict":
         aw_pct     = float(sel_row.get("away_win_%", 35))
 
     if hw_pct >= aw_pct and hw_pct >= draw_pct:
-        winner, winner_emoji = home_team, "🏠"
+        winner = home_team
     elif aw_pct >= hw_pct and aw_pct >= draw_pct:
-        winner, winner_emoji = away_team, "✈️"
+        winner = away_team
     else:
-        winner, winner_emoji = "Draw", "🤝"
+        winner = "Draw"
 
     if winner not in ("Draw", "TBD"):
         diff = abs(hw_pct - aw_pct)
@@ -247,7 +243,7 @@ body{{background:transparent;font-family:'Oswald',sans-serif;}}
     <div style="position:absolute;inset:0;background:radial-gradient(90% 160% at 50% -30%,rgba(76,175,80,0.4),transparent 60%);"></div>
     <div style="position:relative;">
       <div style="font-size:11px;letter-spacing:0.24em;color:#7fce82;font-weight:600;font-family:sans-serif;">PREDICTED WINNER</div>
-      <div style="font-family:'Oswald',sans-serif;font-size:48px;font-weight:800;color:#fff;letter-spacing:1px;line-height:1.05;margin-top:8px;">{winner_emoji} {winner.upper()}</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:48px;font-weight:800;color:#fff;letter-spacing:1px;line-height:1.05;margin-top:8px;">{winner.upper()}</div>
       <div style="display:inline-flex;align-items:center;gap:10px;margin-top:16px;background:rgba(255,255,255,0.08);
            border:1px solid rgba(127,206,130,0.4);border-radius:9999px;padding:8px 18px;">
         <span style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:800;color:#7fce82;line-height:1;">{max(hw_pct,draw_pct,aw_pct):.0f}%</span>
@@ -405,7 +401,7 @@ elif page == "🏆  Who Wins the Cup?":
       <div style='position:relative;'>
         <div style='font-size:11px;letter-spacing:0.24em;color:#7fce82;font-weight:600;'>PREDICTED CHAMPION</div>
         <div style='font-family:Oswald;font-size:56px;font-weight:800;color:#fff;letter-spacing:2px;line-height:1.05;margin-top:8px;'>
-          🏆 {champ['team'].upper()}
+          {champ['team'].upper()}
         </div>
         <div style='display:inline-flex;align-items:center;gap:10px;margin-top:16px;background:rgba(255,255,255,0.08);
              border:1px solid rgba(127,206,130,0.4);border-radius:9999px;padding:8px 18px;'>
@@ -511,9 +507,6 @@ elif page == "⚔️  Team vs Team":
         "mid_count": "Midfielders",
         "fwd_count": "Forwards",
     }
-    # Only include features that exist AND have a non-null value for both
-    # selected teams (avg_caps etc. may be NaN if Zafronix never sourced it
-    # for a given squad).
     available = {
         k: v for k, v in FEATS.items()
         if k in fa.index and k in fb.index
