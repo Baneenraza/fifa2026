@@ -2,12 +2,10 @@
 FIFA World Cup 2026 — Phase 1: Data Collection
 Collects all raw data needed for the project:
   1. Match results & fixtures  → football-data.org API (free)
-  2. Player stats              → fbref.com (scraped, unused — kept for reference)
-  3. Player ratings            → sofifa.com (scraped, unused — kept for reference)
-  3b. Player rosters (2026)    → Zafronix WC API
-  4. Squad lists               → transfermarkt.com (scraped, unused — kept for reference)
-  5. FIFA rankings             → hardcoded from official site (June 2026)
-  6. Historical WC data (2022) → Zafronix WC API (matches + rosters)
+  2. Player rosters (2026)    → Zafronix WC API
+  3. Squad lists               → transfermarkt.com (scraped, unused — kept for reference)
+  4. FIFA rankings             → hardcoded from official site (June 2026)
+  5. Historical WC data (2022) → Zafronix WC API (matches + rosters)
 
 """
 import os
@@ -106,9 +104,7 @@ def compute_rest_days(matches_df: pd.DataFrame) -> pd.DataFrame:
     df.to_csv(RAW_DIR / "matches.csv", index=False)
     return df
 
-# 2. PLAYER STATS — fbref.com (World Cup 2026 stats page)
-# NOTE: kept for reference; Cloudflare blocks this in practice (403). Not
-# called from run(). See section 3b for the working Zafronix-based source.
+# 2. PLAYER STATS
 
 def fetch_fbref_player_stats() -> pd.DataFrame:
     """
@@ -159,12 +155,6 @@ def fetch_fbref_player_stats() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 3. PLAYER RATINGS — sofifa.com (EA FC 26 ratings)
-# NOTE: kept for reference; Cloudflare blocks this in practice (403). Not
-# called from run(). See section 3b for the working Zafronix-based source.
-# ─────────────────────────────────────────────────────────────────────────────
-
 def fetch_sofifa_ratings(team_names: list[str]) -> pd.DataFrame:
     """
     Scrape EA FC 26 player ratings from sofifa.com.
@@ -214,20 +204,10 @@ def fetch_sofifa_ratings(team_names: list[str]) -> pd.DataFrame:
     return df
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 3b. PLAYER STATS — Zafronix World Cup API (api.zafronix.com)
-#     Free tier: 250 requests/day, no card required.
-#     Replaces SoFIFA/FBref scraping and the API-Football attempt (free tier
-#     there excludes the 2026 season). Responses are cached to disk so
-#     re-runs don't burn quota.
-# ─────────────────────────────────────────────────────────────────────────────
 
 ZAFRONIX_BASE = "https://api.zafronix.com/fifa/worldcup/v1"
 WC_YEAR = 2026
 
-# Historical years to additionally pull (section 6). Start with just 2022 —
-# add 2018/2014 later only if 2022 demonstrably helps the model, since more
-# years means more rows with missing caps/height/rank features.
 HISTORICAL_YEARS = [2022, 2018, 2014]
 
 
@@ -315,10 +295,7 @@ def fetch_zafronix_rosters(api_key: str, team_names: list[str]) -> pd.DataFrame:
         print(f"   Saved {len(df)} player records → data/raw/zafronix_rosters.csv")
     return df
 
-# 4. SQUAD LISTS — transfermarkt.com
-# NOTE: kept for reference; not called from run(). Defined but unused, same
-# as in earlier versions of this script.
-# ─────────────────────────────────────────────────────────────────────────────
+# 4. SQUAD LISTS 
 
 def fetch_squad_lists() -> pd.DataFrame:
     """
@@ -430,27 +407,8 @@ def save_fifa_rankings() -> pd.DataFrame:
     print(f"   Saved {len(df)} team rankings → data/raw/rankings.csv")
     return df
 
+# 6. HISTORICAL DATA 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 6. HISTORICAL DATA — past World Cups via Zafronix (matches + rosters)
-#
-#    Schema differences vs section 3b (2026 rosters):
-#      - No FIFA ranking data exists in Zafronix for historical years.
-#      - Historical squads only have: jersey, name, position, born,
-#        ageAtTournament, club, goals (TOURNAMENT goals, not season goals
-#        — kept as a distinct column `goals_tournament`, not `goals_2025`,
-#        so Phase 2 never accidentally conflates the two units).
-#      - No caps, height_cm, weight_kg, dominant_foot, national_goals,
-#        captain/starter flags — "not yet sourced" per Zafronix's docs.
-#      - Raw homeTeam/awayTeam strings from the /matches endpoint can have
-#        stray leading/trailing whitespace (e.g. "Qatar ", " Ecuador") —
-#        stripped here during collection.
-#
-#    Output is saved separately under data/raw/historical/ rather than
-#    merged into matches.csv / players.csv — merging requires deliberate
-#    handling in Phase 2 (NaN-filling the 2026-only columns on historical
-#    rows, plus an is_2026 flag for auditing missingness-leakage).
-# ─────────────────────────────────────────────────────────────────────────────
 
 def fetch_historical_matches(api_key: str, year: int) -> pd.DataFrame:
     """Fetch all matches for one historical WC year, same row-per-match

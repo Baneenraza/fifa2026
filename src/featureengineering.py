@@ -11,15 +11,8 @@ RAW_DIR        = Path("data/raw")
 HISTORICAL_DIR = Path("data/raw/historical")
 OUT_DIR        = Path("data/processed")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-# Historical years to include, beyond the current 2026 tournament. Must
-# match data/raw/historical/{matches,players}_{year}.csv produced by
-# Phase 1's fetch_historical_data().
 HISTORICAL_YEARS = [2022, 2018, 2014]
 
-# Real stage values as returned by football-data.org (2026) and Zafronix
-# (historical years use different strings — e.g. "group_a" vs "groupstage",
-# "r16" vs "last16" — both are mapped onto the same tournament-progress scale).
 STAGE_ORDER = {
     "groupstage":    0,
     "last32":        1,
@@ -75,12 +68,6 @@ def build_team_features_for_year(players: pd.DataFrame, year: int) -> pd.DataFra
         )
         parts.append(experience)
 
-# NOTE: confirmed via direct inspection (June 2026) that Zafronix's 2026
-    # roster endpoint returns goals=0 for essentially every player, not just
-    # a few - this is "not yet sourced" per their own docs, not real zero
-    # output. Detect this case and treat the column as NOT SOURCED (NaN)
-    # rather than as a real all-zero result, so it doesn't masquerade as
-    # signal in Phase 4's correlation-based feature selection.
     goals_col = "goals_2025" if "goals_2025" in df.columns else (
         "goals_tournament" if "goals_tournament" in df.columns else None
     )
@@ -99,12 +86,6 @@ def build_team_features_for_year(players: pd.DataFrame, year: int) -> pd.DataFra
 
     if "club_country" in df.columns:
         def league_feats(g):
-            # club_country is missing for ~15-22% of players in the data
-            # we've checked (slightly more for older historical years).
-            # Treating a missing value as "not top league" silently
-            # understates every team's ratio by a measurable amount -
-            # excluding those rows from the denominator instead means the
-            # ratio only reflects players we actually have club data for.
             known = g["club_country"].dropna()
             if len(known) == 0:
                 return pd.Series({"top_league_count": 0, "top_league_ratio": np.nan})

@@ -68,9 +68,6 @@ EDA_DIR.mkdir(parents=True, exist_ok=True)
 
 N_SIMS = 1_000   # number of Monte Carlo simulations
 
-# Verified, correct WC 2026 group structure - cross-checked against
-# Wikipedia's per-group articles and FIFA.com/Mappr group pages, June 2026.
-# Every team appears in EXACTLY ONE group (48 unique teams, 12 groups x 4).
 GROUPS = {
     "A": ["Mexico", "South Africa", "South Korea", "Czechia"],
     "B": ["Canada", "Bosnia and Herzegovina", "Qatar", "Switzerland"],
@@ -93,15 +90,6 @@ assert len(ALL_TEAMS) == 48, f"Expected 48 unique teams, got {len(ALL_TEAMS)}"
 for team, count in pd.Series([t for teams in GROUPS.values() for t in teams]).value_counts().items():
     assert count == 1, f"{team} appears in multiple groups - GROUPS dict is wrong"
 
-
-# Round of 32 pairing skeleton. FIFA's real pairing rule routes specific
-# 3rd-place teams to specific bracket slots depending on WHICH groups
-# produced the 8 qualifying 3rd-place teams (the full chart has 1080
-# possible combinations). Modeling the exact official chart is out of
-# scope for a simulator at this stage; instead, the 8 advancing 3rd-place
-# teams are assigned to the 8 "open" bracket slots in ranked order
-# (best 3rd-place team first). This is a documented simplification, not a
-# silent inaccuracy - see qualify_third_place_teams() and build_bracket().
 GROUP_WINNER_RUNNERUP_PAIRS = [
     ("A", "B"), ("C", "F"), ("E", "I"), ("D", "J"),
     ("G", "H"), ("K", "L"),

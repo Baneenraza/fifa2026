@@ -23,16 +23,9 @@ plt.rcParams.update({
 })
 COLORS = {"win": "#2ecc71", "draw": "#f39c12", "loss": "#e74c3c"}
 
-# Quality proxy used throughout - no overall rating exists in this dataset,
-# so we use share of squad playing in a "big 5" league as the stand-in.
-# Available for every year (built from club_country).
 QUALITY_COL = "top_league_ratio"
 QUALITY_LABEL = "Top-League Squad Share"
 
-# The year used for single-year plots (squad strength, age analysis) -
-# these compare teams to each other within one tournament, so mixing years
-# would be misleading. Historical years still get covered by
-# plot_year_comparison() and the correlation/goal-distribution plots.
 PRIMARY_YEAR = 2026
 
 
@@ -430,3 +423,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+    
