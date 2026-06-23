@@ -1,0 +1,14 @@
+pandas
+numpy
+requests
+python-dotenv
+tqdm
+beautifulsoup4
+lxml
+scikit-learn
+xgboost
+shap
+matplotlib
+seaborn
+streamlit
+plotly
